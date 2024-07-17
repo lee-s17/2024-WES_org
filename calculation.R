@@ -42,7 +42,7 @@ e112_hgdp <- select(e112_hgdp, c(3:7,11,14,16)) %>% rename("REF_HGDP"=REF,"ALT_H
 i <- c(6, 7)
 e112_hgdp[ , i] <- apply(e112_hgdp[ , i], 2, function(x) as.numeric(as.character(x)))
 sapply(e112_hgdp, class)
-#Export MasterFile: ORGVEP_BCF_HGDP (1,327 unique)
+#Export MasterFile: ORGVEP_BCF_HGDP (1,327 unique ORG)
 ORGVEP_BCF_HGDP <- merge(x=ORGVEP_BCF, y=e112_hgdp, by.x ="chrompos", by.y = "chrompos", all.x =  TRUE)
 #write.table(ORGVEP_BCF_HGDP, "ORGVEP_BCF_HGDP.txt", quote = FALSE, row.names = FALSE, sep = "\t")
 
@@ -101,7 +101,7 @@ corrANCFST_ORGVEPBCF_HGDP <- merge(x=corrANC_ORGVEPBCF_HGDP, y=select(fstall, 3,
 #############################################Masterfile: ORGVEP_BCF_HGDP and DAF, FST
 simpcorrANCFST_ORGVEPBCF_HGDP <- select(corrANCFST_ORGVEPBCF_HGDP, c(1,21:29))
 ORGVEP_BCF_HGDP_CALCS <- merge(x=ORGVEP_BCF_HGDP, y=simpcorrANCFST_ORGVEPBCF_HGDP, by.x ="Location", by.y = "Location", all.x =  TRUE)
-write.table(ORGVEP_BCF_HGDP_CALCS, "ORGVEP_BCF_HGDP_CALCS.txt", quote = FALSE, row.names = FALSE, sep = "\t")
+#write.table(ORGVEP_BCF_HGDP_CALCS, "ORGVEP_BCF_HGDP_CALCS.txt", quote = FALSE, row.names = FALSE, sep = "\t")
 
 
 #####DAF FST: quantile and outliers
@@ -129,7 +129,7 @@ ggplot(rbind(daf,fst), aes(x =Range, y = SNPs, fill = Value, colour = Value)) +
   geom_text(aes(label = SNPs), vjust = -0.5, size=7, colour = "black",position = position_dodge(.9))+
   facet_grid(cols = vars(Value), scales="free_x")+ 
   theme(legend.position="none",panel.grid.major = element_blank(), panel.grid.minor = element_blank())
-ggsave("DAF_FST.jpeg", width=50, height=30, units = "cm", bg = "white")
+#ggsave("DAF_FST.jpeg", width=50, height=30, units = "cm", bg = "white")
 
 #HGDP-OA
 ddaf_OAHGDP <- filter(corrANCFST_ORGVEPBCF_HGDP, corrANCFST_ORGVEPBCF_HGDP$AN >= 90 & !is.na(corrANCFST_ORGVEPBCF_HGDP$dDAF_OA_AFR) ) #genotype rate
@@ -155,7 +155,7 @@ ggplot(rbind(daf_OA_AFR,daf_OA_NON), aes(x =  Range, y = SNPs, fill = Value, col
   geom_text(aes(label = SNPs), vjust = -0.5, size=7, colour = "black",position = position_dodge(.9))+
   facet_grid(cols = vars(Comparison), scales="free_x",space = "free" )+ 
   theme(legend.position="none",panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line.y.right = )
-ggsave("DAF_FST-OAHGDP.jpeg", width=60, height=30, units = "cm", bg = "white")
+#ggsave("DAF_FST-OAHGDP.jpeg", width=60, height=30, units = "cm", bg = "white")
 
 allupper <- rbind(
   data.frame(upperdaf_JHTM,Comparison="∆DAF_JH-TM"),
@@ -163,26 +163,23 @@ allupper <- rbind(
   data.frame(upperdaf_OA_AFR,Comparison="∆DAF_OA_AFR"),
   data.frame(upperdaf_OA_NON,Comparison="∆DAF_OA-NON"))
 
-simpallupper <- select(allupper, c(1))
+simpallupper <- select(allupper, c(1,30))
 all_upperORGVEP_BCF_HGDP_CALCS <- merge(x=simpallupper, y=ORGVEP_BCF_HGDP_CALCS, by.x ="Location", by.y = "Location", all.x =  TRUE)
 filter(all_upperORGVEP_BCF_HGDP_CALCS,all_upperORGVEP_BCF_HGDP_CALCS$IMPACT == "MODERATE")
 
 select(allupper, 1) %>% distinct()
-AN_hgdp_HARDY <- merge(AN_hgdp, hardy, by.x ="V1", by.y = "ID", all.x =  TRUE)
-hardy <- read.table("test.hardy", header = TRUE)
-head(corrANCFST_ORGVEPBCF_HGDP)
+hardysnp <- read.table("OA-homhet-snp.hardy", header = TRUE)
+hardyindel <- read.table("OA-homhet-indel.hardy", header = TRUE)
+hardyall <- rbind(hardysnp,hardyindel)
+upperORGVEP_BCF_HGDP_CALCS_hardy <- merge(all_upperORGVEP_BCF_HGDP_CALCS, hardyall, by.x ="Location", by.y = "ID", all.x =  TRUE)
+hardysnphgdp <- read.table("hgdporg-auto-homhet.hardy", header = TRUE)
+upperORGVEP_BCF_HGDP_CALCS_allhardy <- merge(upperORGVEP_BCF_HGDP_CALCS_hardy, hardysnphgdp, by.x ="Location", by.y = "ID_HGDP", all.x =  TRUE)
 
-checkhgdp <- select(corrANCFST_ORGVEPBCF_HGDP, c(1,8:10,15,16,18,21:28))
-checkhgdp <- filter(checkhgdp,checkhgdp$AN >= 47*2*0.95 )
-withhgdp <- filter(checkhgdp, !is.na(checkhgdp$REF_HGDP))
-filter(withhgdp, withhgdp$ALT_HGDP != withhgdp$ALT)
-#with hgdp 1158
+export_upperORGVEPBCF_HGDP_CALCSallhardy <- select(upperORGVEP_BCF_HGDP_CALCS_allhardy, !c(16,17,28,29,32,34))
+write.table(export_upperORGVEPBCF_HGDP_CALCSallhardy,"upperORGVEP_BCF_HGDP_CALCS_allhardy.txt", quote = FALSE, row.names = FALSE, sep = "\t")
 
-AN_hgdp_HARDY <- merge(withhgdp, hardy, by.x ="Location", by.y = "ID", all.x =  TRUE)
-testhwe <- filter(AN_hgdp_HARDY, AN_hgdp_HARDY$P <= 1e-05 | AN_hgdp_HARDY$AN_HGDP <= 1687)
-write.table(testhwe,"testhwe.txt", quote = FALSE, row.names = FALSE, sep = "\t")
-head(corrANCFST_ORGVEPBCF_HGDP)
 
+41-9
 
 
 
