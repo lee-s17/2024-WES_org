@@ -154,7 +154,7 @@ ggplot(rbind(daf_OA_AFR,daf_OA_NON), aes(x =  Range, y = SNPs, fill = Value, col
   geom_bar(stat = "identity", position = "dodge", width = 0.6)+theme_bw(base_size = 32)+labs(y= "No. of Variants", x = "Bins")+
   geom_text(aes(label = SNPs), vjust = -0.5, size=7, colour = "black",position = position_dodge(.9))+
   facet_grid(cols = vars(Comparison), scales="free_x",space = "free" )+ 
-  theme(legend.position="none",panel.grid.major = element_blank(), panel.grid.minor = element_blank(),axis.line.y.right = )
+  theme(legend.position="none",panel.grid.major = element_blank(), panel.grid.minor = element_blank() )
 #ggsave("DAF_FST-OAHGDP.jpeg", width=60, height=30, units = "cm", bg = "white")
 
 allupper <- rbind(
@@ -179,7 +179,29 @@ export_upperORGVEPBCF_HGDP_CALCSallhardy <- select(upperORGVEP_BCF_HGDP_CALCS_al
 write.table(export_upperORGVEPBCF_HGDP_CALCSallhardy,"upperORGVEP_BCF_HGDP_CALCS_allhardy.txt", quote = FALSE, row.names = FALSE, sep = "\t")
 
 
-41-9
+setwd("/Volumes/mum2023/z6/Documents/workingdir/WES/gtex/")
+# Load necessary libraries
+library(ggplot2)
+library(reshape2)
+library(tidyr)
+library(dplyr)
+library(ggh4x)
 
+id <- read.table("../e112/upperORGVEP_BCF_HGDP_CALCS_allhardy.txt", header = TRUE)
+gtex_search <- read.table("searchgtex_output.txt", header = TRUE)
+gtex_search_split <- gtex_search %>% separate_wider_delim(variant_id, delim = "_", names = c("chr", "location","ref","alt","build"))
+gtex_search_id <- merge(unique(gtex_search_split), unique(select(id,c(4,5))), by.x ="location", by.y = "LocationSplit", all.x = TRUE)
+gtex_search_id <- gtex_search_id %>% replace_na(list(Uploaded_variation =  "rs11310407"))
+
+gtex_search_id$chr <- factor(gtex_search_id$chr, levels=c("chr1","chr9","chr11","chr12","chr19"))
+ggplot(gtex_search_id, aes(Uploaded_variation, tissue, fill= slope)) + 
+  geom_tile(color = "black",lwd = 0.3,linetype = 1)+
+  scale_fill_gradient2(low = "darkblue", high = "red",  na.value = "white", midpoint = 0,mid ="white")+
+  labs(y = "Tissue", x = "", fill = "NES") + theme_bw()+
+  theme(panel.grid = element_line(colour = "grey90"), 
+    axis.text.x = element_text(angle = 45, hjust = 1),legend.position="top",panel.background = element_rect(fill = "white"))+
+  facet_grid(cols = vars(chr), scales="free_x",space = "free")
+ggsave("uppergtexEQTL.jpeg", width=30, height=60, units = "cm", bg = "white")
+write.table(gtex_search_id,"gtex_search_id.txt", quote = FALSE, row.names = FALSE, sep = "\t")
 
 
